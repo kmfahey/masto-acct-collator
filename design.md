@@ -4,17 +4,17 @@ The script files I wrote while trying to solve a series of related problems via 
 
 | Script | Functionality
 | ------ | -------------
-| datscan.py | takes .dat file produced by notifdler and commits it to an SQL database
-| flwr\_query.py | an experiment with trying to download the followers of an account at another host
-| follow.py | takes a list of accounts and follows each user
-| notifdler2.py | given a specific post id belonging to the logging-in user, loads all notifications pertaining to that post, and saves the full dict-of-dicts of notifications to a .dat file using pickle
-| notifdler.py | given a specific post id belonging to the logging-in user, loads all notifications pertaining to that post until a specific notification is encountered, saves the full dict-of-dicts of notifications to a .dat file using pickle
-| notif\_list\_rearranger.py | postprocessor that loads the .dat file created by notifdler or notifdler2, rearranges it and saves the result to a different .dat file
-| recent\_follows.py | downloads recent follow notifications emitted after a certain point in the past, and displays them
-| search2.py | downloads the followers and following user lists and saves them to a .dat file
-| search3.py | runs down a list of search terms and iteratively matches each one against a MySQL table of masto account data that has FULLTEXT set up, then displays all the matching account data in a justified table
-| search4.py | as search3 but with a much shorter list
-| search.py | as search3 but an earlier iteration of the same functionality
+| `datscan.py` | takes .dat file produced by notifdler and commits it to an SQL database
+| `flwr\_query.py` | an experiment with trying to download the followers of an account at another host
+| `follow.py` | takes a list of accounts and follows each user
+| `notifdler2.py` | given a specific post id belonging to the logging-in user, loads all notifications pertaining to that post, and saves the full dict-of-dicts of notifications to a .dat file using pickle
+| `notifdler.py` | given a specific post id belonging to the logging-in user, loads all notifications pertaining to that post until a specific notification is encountered, saves the full dict-of-dicts of notifications to a .dat file using pickle
+| `notif\_list\_rearranger.py` | postprocessor that loads the .dat file created by notifdler or notifdler2, rearranges it and saves the result to a different .dat file
+| `recent\_follows.py` | downloads recent follow notifications emitted after a certain point in the past, and displays them
+| `search2.py` | downloads the followers and following user lists and saves them to a .dat file
+| `search3.py` | runs down a list of search terms and iteratively matches each one against a MySQL table of masto account data that has FULLTEXT set up, then displays all the matching account data in a justified table
+| `search4.py` | as search3 but with a much shorter list
+| `search.py` | as search3 but an earlier iteration of the same functionality
 
 # Important Mastodon API v1 Incantation
 
@@ -48,33 +48,67 @@ This functionality is not supported on all servers. It worked when tried on mast
 
 * Given a list of search terms, iteratively matches each one against the FULLTEXT index of the sqlite3 table of profiles and displays matches.
 
-# SQLite3 Table Schema Brainstorming
+# SQLite3 Table Schema First Draft
 
-* profiles
+* `profiles` table:
 
-    * Have a handle column. Useful as a single-column foreign key.
+    * `handle` column: Text. Primary key.
 
-    * Use handle as primary key? Or have a normal autoincrementing numeric id?
+        * A text primary key is less efficient than a numeric one. But the data in the table is more human-readable, which is relevant since the author is known to muck about at the SQL command prompt.
 
-    * Also store the profile(s) of any logged-in user in the same table?
+    * `loginable` column: boolean, indicates the profile is of a user who has been logged-in as at least once.
 
-        * Use special flag to denote profiles of this kind?
+    * As a starting point, should be based on the same schema as the MySQL table currently serving this purpose. What follows is the schema as translated to SQLite 3.40 by [jooq.org](https://www.jooq.org/):
 
-    * Column for every single property in the account JSON object?
-    
-        * Or should we disregard all the known-irrelevant properties and conform to the schema of the MySQL table current serving this purpose?
+```
+CREATE TABLE profiles (
+  id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  acct_id INT8 NOT NULL,
+  user_id CLOB NOT NULL,
+  user_name CLOB NOT NULL,
+  url CLOB NOT NULL,
+  field_name_1 CLOB,
+  field_value_1 CLOB,
+  field_name_2 CLOB,
+  field_value_2 CLOB,
+  field_name_3 CLOB,
+  field_value_3 CLOB,
+  field_name_4 CLOB,
+  field_value_4 CLOB,
+  profile_text CLOB NOT NULL,
+  earliest_notif_ts DATETIME NOT NULL,
+  tested TINYINT NOT NULL DEFAULT ('0'),
+  INDEX user_id (user_id),
+  INDEX header_value_1 (field_value_1),
+  INDEX header_value_2 (field_value_2),
+  INDEX header_value_3 (field_value_3),
+  INDEX header_value_4 (field_value_4),
+  INDEX profile_text (text),
+  INDEX user_name (user_name)
+)
+ENGINE InnoDB
+AUTO_INCREMENT 1
+DEFAULT CHARSET utf8mb4
+COLLATE utf8mb4_0900_ai_ci
+```
 
-* notifs
+* `notifs` table:
 
-    * Foreign key (`handle`) to profiles table.
+    * `notifier_handle` column: foreign key <= profiles table to initiating user's profile
 
-* follow_ers_ings
+    * `type` column => pseudo-enum: "mention", "favourite", "reblog", "follow"
 
-    * Foreign `handle` key <= profiles table to the user's profile
+    * `uri` column: text
 
-    * Foreign `handle` key <= profiles table to login-able has-a user profile
+        * Both `uri` and `url` properties are included in the JSON object. Notionally the `uri` property should be more authoritative than the `url` property. In practice this may or may not be the case.
 
-    * One table, with a ternary pseudo-enum column denoting follower, following, or mutual.
+* `follow` table:
+
+    * `user_handle` column: Foreign key <= profiles table to follower/following/mutual user's profile
+
+    * `owning_handle` column: Foreign key <= profiles table to login-able has-a user profile
+
+    * `relation` column: a ternary pseudo-enum: "follower", "following", "mutual"
 
     * ⊘ No need to have two identical tables differing only in semantic significance of the table names. ⊘ 
 
