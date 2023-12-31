@@ -5,12 +5,12 @@ The script files I wrote while trying to solve a series of related problems via 
 | Script | Functionality
 | ------ | -------------
 | `datscan.py` | takes .dat file produced by notifdler and commits it to an SQL database
-| `flwr\_query.py` | an experiment with trying to download the followers of an account at another host
+| `flwr_query.py` | an experiment with trying to download the followers of an account at another host
 | `follow.py` | takes a list of accounts and follows each user
 | `notifdler2.py` | given a specific post id belonging to the logging-in user, loads all notifications pertaining to that post, and saves the full dict-of-dicts of notifications to a .dat file using pickle
 | `notifdler.py` | given a specific post id belonging to the logging-in user, loads all notifications pertaining to that post until a specific notification is encountered, saves the full dict-of-dicts of notifications to a .dat file using pickle
-| `notif\_list\_rearranger.py` | postprocessor that loads the .dat file created by notifdler or notifdler2, rearranges it and saves the result to a different .dat file
-| `recent\_follows.py` | downloads recent follow notifications emitted after a certain point in the past, and displays them
+| `notif_list_rearranger.py` | postprocessor that loads the .dat file created by notifdler or notifdler2, rearranges it and saves the result to a different .dat file
+| `recent_follows.py` | downloads recent follow notifications emitted after a certain point in the past, and displays them
 | `search2.py` | downloads the followers and following user lists and saves them to a .dat file
 | `search3.py` | runs down a list of search terms and iteratively matches each one against a MySQL table of masto account data that has FULLTEXT set up, then displays all the matching account data in a justified table
 | `search4.py` | as search3 but with a much shorter list
@@ -18,7 +18,7 @@ The script files I wrote while trying to solve a series of related problems via 
 
 # Important Mastodon API v1 Incantation
 
-If one has the handle of a randomly select mastodon user, and wishes to programmatically download their followers and following lists, the following functionality *may* work.
+If one has the handle of a randomly select mastodon user, and wishes to programmatically download their followers and following lists, the following procedure *may* work.
 
 1. Break down the handle into the values `$USERNAME` and `$INSTANCE` derived from that handle.
 1. Attempt to load the REST url `https://$INSTANCE/api/v1/accounts/lookup?acct=$USERNAME`
@@ -29,22 +29,23 @@ If one has the handle of a randomly select mastodon user, and wishes to programm
     * Followings will be accessible at the REST url `https://$INSTANCE/api/v1/accounts/$ID/following`
     * Refer to the Link header of the response for pagination links to prev and next pages
 
-This functionality is not supported on all servers. It worked when tried on mastodon.social, lea.pet, and mas.to. It did not work on cybre.space. At the time of writing the author does not know whether it normally requires the client to be logged-in to the instance. Since mastodon.social is in many respects the canonical mastodon instance, and that instance doesn't require a login to use this functionality, that is *likely* to be the default.
+This functionality is not supported on all servers. It worked when tried on `mastodon.social`, `lea.pet`, and `mas.to`. It did not work when tried on `cybre.space`. At the time of writing the author does not know whether it normally requires the client to be logged-in to the instance. Since `mastodon.social` is in many respects the canonical mastodon instance, and that instance doesn't require a login to use this functionality, that is *likely* to be the default.
 
 # Proposed and Possible Script Functionality
 
-* Create & maintain an on-disk database (sqlite3).
+* Create & maintain an on-disk database (`sqlite3`).
 
-* Download the followers and followings associated with the logging-in user's account. (And store them in the sqlite3 db.)
+* Download the followers, followings, and follow-requested accounts associated with the logging-in user's account. (And store them in the db.)
 
-* Given a list of accounts, follow each one via the logged-in user's account.
+* Given a list of accounts, follow each one via the logged-in user's account. (And update the `follow` table accordingly.)
 
-* Given a specific post id belonging to the logged-in user, load all notifications pertaining to that post. (Store in them in the db.)
-    * Differentiate from the account dicts included in each Mastodon.py response. (Store those in the db too.)
+* Given a specific post id belonging to the logged-in user, load all notifications pertaining to that post. (And store in them in the db.)
 
-* Download recent follow notifications up to a certain point in the past. (Save them to the db.) And display them.
+    * Pull out the account dicts included in each Mastodon.py response. (Store those in the db too.)
 
-* Compare current followers list to most recent copy and detect unfollows.
+* Download recent follow notifications up to a certain point in the past, and display them. (Also save them to the db.)
+
+* Compare current followers list to most recent copy and detect unfollows. (Update the `follow` table.)
 
 * Given a list of search terms, iteratively matches each one against the FULLTEXT index of the sqlite3 table of profiles and displays matches.
 
@@ -108,7 +109,7 @@ COLLATE utf8mb4_0900_ai_ci
 
     * `owning_handle` column: Foreign key <= profiles table to login-able has-a user profile
 
-    * `relation` column: a ternary pseudo-enum: "follower", "following", "mutual"
+    * `relation` column: a pseudo-enum: "follower", "following", "mutual", "requested", "no-longer-following", "no-longer-follower", "no-longer-mutual"
 
     * ⊘ No need to have two identical tables differing only in semantic significance of the table names. ⊘ 
 
