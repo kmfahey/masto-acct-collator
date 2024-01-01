@@ -1,10 +1,13 @@
 #!/usr/bin/python3
 
-PREAMBLE = """
+__export__ = ("FOREIGN_KEYS_PRAGMA_SQL", "PROFILES_CREATE_TABLE_SQL", "PROFILES_CREATE_INDEX_SQL", "PROFILES_FTS_CREATE_TABLE_SQL", "NOTIFS_CREATE_TABLE_SQL", "FOLLOW_CREATE_TABLE_SQL")
+
+
+FOREIGN_KEYS_PRAGMA_SQL = """
 PRAGMA foreign_keys = ON;
 """
 
-PROFILES_CREATE_TABLE = """
+PROFILES_CREATE_TABLE_SQL = """
 CREATE TABLE profiles (
     user_id TEXT PRIMARY KEY NOT NULL,
     fts_rowid INT,
@@ -27,11 +30,11 @@ CREATE TABLE profiles (
 );
 """
 
-PROFILES_CREATE_INDEX = """
+PROFILES_CREATE_INDEX_SQL = """
 CREATE INDEX idx_profiles_fts_rowid ON profiles (fts_rowid);
 """
 
-PROFILES_FTS_CREATE_TABLE = """
+PROFILES_FTS_CREATE_TABLE_SQL = """
 CREATE VIRTUAL TABLE profiles_fts USING fts5(
     user_id,
     user_name,
@@ -48,7 +51,7 @@ CREATE VIRTUAL TABLE profiles_fts USING fts5(
 );
 """
 
-NOTIFS_CREATE_TABLE = """
+NOTIFS_CREATE_TABLE_SQL = """
 CREATE TABLE notifs (
     from_user_id TEXT PRIMARY KEY NOT NULL,
     to_user_id TEXT NOT NULL,
@@ -60,7 +63,7 @@ CREATE TABLE notifs (
 );
 """
 
-FOLLOW_CREATE_TABLE = """
+FOLLOW_CREATE_TABLE_SQL = """
 CREATE TABLE follow (
     by_user_id TEXT PRIMARY KEY NOT NULL,
     of_user_id TEXT NOT NULL,
