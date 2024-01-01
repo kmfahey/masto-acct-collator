@@ -123,3 +123,6 @@ dmypy.json
 # Vim journal files
 .sw[a-z]
 .*.sw[a-z]
+
+# sqlite dbs
+*.db
