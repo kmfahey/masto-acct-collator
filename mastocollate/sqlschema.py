@@ -1,7 +1,13 @@
 #!/usr/bin/python3
 
-__export__ = ("FOREIGN_KEYS_PRAGMA_SQL", "PROFILES_CREATE_TABLE_SQL", "PROFILES_CREATE_INDEX_SQL", "PROFILES_FTS_CREATE_TABLE_SQL", "NOTIFS_CREATE_TABLE_SQL", "FOLLOW_CREATE_TABLE_SQL")
-
+__export__ = (
+    "FOREIGN_KEYS_PRAGMA_SQL",
+    "PROFILES_CREATE_TABLE_SQL",
+    "PROFILES_CREATE_INDEX_SQL",
+    "PROFILES_FTS_CREATE_TABLE_SQL",
+    "NOTIFS_CREATE_TABLE_SQL",
+    "FOLLOW_CREATE_TABLE_SQL",
+)
 
 FOREIGN_KEYS_PRAGMA_SQL = """
 PRAGMA foreign_keys = ON;
@@ -74,4 +80,19 @@ CREATE TABLE follow (
 );
 """
 
+# A statement that can be run immediately after an insert into the profile_fts
+# table to grab the implicit rowid for the just-created row.
+#
 # LAST_ROWID_SELECT_STATEMENT = "SELECT last_insert_rowid();"
+
+# A statement that can be used after adding the same record to profiles and
+# profiles_fts to set profiles.fts_rowid to the rowid value assigned to the
+# record created in profiles_fts with the user_id value both records share.
+#
+# UPDATE profiles
+# SET fts_rowid = (
+#     SELECT rowid
+#     FROM profiles_fts
+#     WHERE profiles_fts.user_id = {specific_user_id}
+# )
+# WHERE user_id = {specific_user_id};
