@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
-import warnings
-import sqlite3
+from mastocollate.datastore import DataStore
 
 
-
+data_store = DataStore("mastocollate.db")
