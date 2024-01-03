@@ -120,6 +120,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# pycache dirs
+__pycache__/
+
 # Vim journal files
 .sw[a-z]
 .*.sw[a-z]
